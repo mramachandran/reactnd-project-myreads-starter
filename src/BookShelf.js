@@ -3,9 +3,6 @@ import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
 class BookShelf extends Component {
-  state = {
-    
-  }  
     
   static propTypes = {
     books: PropTypes.array.isRequired,
@@ -14,13 +11,16 @@ class BookShelf extends Component {
     title: PropTypes.string.isRequired,  
   }
 
-  render() {
-    const { books,shelf,title, onShelfChange } = this.props
-    //const { shelfTitle, displayShelf,bookTitle,bookAuthor } = this.state
+   isRealValue(obj)
+   {
+     console.log('type of objet is ' + typeof(obj))
+    return obj && obj !== 'null' && obj !== 'undefined' && obj.length>0;
+   }
 
-     console.log(shelf)
-     //TODO: catch exception when no books are on shelf
-     
+
+  render() {
+    const {shelf,title,books, searchBooks,onShelfChange } = this.props
+     //console.log(books)
      return ( 
         
          <div className="bookshelf">  
@@ -30,9 +30,9 @@ class BookShelf extends Component {
 								<ol className="books-grid"> 								
       								{books.filter((book) => book.shelf===shelf).map((book) => (
  								           <li key={book.id} className='book'>
-                                               <div className="book-top">
+                                               <div className="book-top">                          
      										       <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url("${book.imageLinks.thumbnail}")` }}></div>
-                                                    <div className="book-shelf-changer"  onChange={(event) => onShelfChange(book,event.target.value)}>
+                                                    <div className="book-shelf-changer"   onChange={(event) => onShelfChange(book,event.target.value)}>
                                                           <select defaultValue={shelf}>
                                                             <option value="move" disabled>Move to...</option>
                                                             <option value="currentlyReading">Currently Reading</option>
@@ -47,8 +47,7 @@ class BookShelf extends Component {
 										</li>
         						    ))}
                                </ol>
-                          
-                     
+                    
                               ) :
 								( 
                                    <ol className="books-grid" /> 

@@ -14,7 +14,9 @@ class SearchBooks extends Component {
   
  state = {
     query: '',
-    maxResults: 20
+    displayShelf: '',
+    showSearchPage: false
+
   }
 
   printChange(e) {
@@ -24,11 +26,15 @@ class SearchBooks extends Component {
 //Credit : https://www.youtube.com/watch?v=KXao_qwl05k
    updateQuery = debounce((text) => {
      this.setState({ query: text }) 
+     console.log("displaying results for " + text)
    },500)
 
-  
+    componentWillMount() {
+     this.clearQuery()
+    }
+
   componentWillUnmount() {
-    //this.updateQuery.cancel();
+    this.clearQuery()
   }
 
   clearQuery = () => {
@@ -37,25 +43,30 @@ class SearchBooks extends Component {
   
   static propTypes = {
     books: PropTypes.array.isRequired,
-    showingSearchBooks: PropTypes.array.isRequired,
+    searchBooks: PropTypes.array.isRequired,
+    //showingSearchBooks: PropTypes.array.isRequired,
     onSearchQuery : PropTypes.func.isRequired,
-    handleSearchBar: PropTypes.func.isRequired
+    //showSearchBar: PropTypes.func.isRequired
   }
 
+   isRealValue(obj)
+   {
+    return obj && obj !== 'null' && obj !== 'undefined' && obj.length>0;
+   }
 
   render() {
     
-    const { books, onSearchQuery,onShelfChange,handleSearchBar,showingSearchBooks } = this.props
+    const { onSearchQuery,books,searchBooks,onShelfChange } = this.props
     const { query, displayShelf, showSearchPage } = this.state
-
+  
     const shelves = {
-        SearchResults: ['Display Results', 'displayResults']
-      }
+    currentlyReading: ['', 'displayResults'],
+    }  
 
       return (
           <div className="search-books">
             <div className="search-books-bar">
-              <a className="close-search" onClick={() => handleSearchBar(false)}>Close</a>
+            <Link to="/" className="close-search"></Link>
               <div className="search-books-input-wrapper">
                 {/*
                   NOTES: The search from BooksAPI is limited to a particular set of search terms.
@@ -69,17 +80,18 @@ class SearchBooks extends Component {
               </div>
             </div>
             <div className="search-books-results">
-              <div className="list-books-content">
-                { Object.keys(shelves).map((shelf) =>
-                  <DisplaySearchResults key={"searchResults"}
-                    shelf={shelves[shelf][1]}
-                    title={shelves[shelf][0]}
-                    books={ books }
-                    showingSearchBooks = {showingSearchBooks}
-                    onShelfChange={ (books,shelf) => { onShelfChange(books,shelf) } }
-                  />
-   				 )}
-  				</div>
+                    <div className="list-books-content">
+                      { Object.keys(shelves).map((shelf) =>
+                        <DisplaySearchResults key={shelf}
+                          shelf={shelves[shelf][1]}
+                          title={shelves[shelf][0]}
+                          books={books}   
+						  searchBooks={searchBooks}
+						  onShelfChange={(books,shelf) => { onShelfChange(books,shelf) } }
+                        />
+                       )}			
+                      </div>
+                    
             </div>
           
           </div>                

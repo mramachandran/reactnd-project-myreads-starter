@@ -9,13 +9,6 @@ import { debounce } from "debounce";
 
 class BooksApp extends React.Component {
   
-  constructor(props,context) {
-     super(props, context)   
-    //Credit: https://stackoverflow.com/questions/39176248/react-js-cant-read-property-of-undefined
-     this.refreshPage = this.refreshPage.bind(this);
-     this.resetPage = this.resetPage.bind(this);
-  }
-  
   
   state = {
     /**
@@ -24,90 +17,125 @@ class BooksApp extends React.Component {
      * users can use the browser's back and forward buttons to navigate between
      * pages, as well as provide a good URL they can bookmark and share.
      */
-    showSearchPage: true,
     books: [],
-    shelfChangeOccured: false,
-    showingBooks: []
-  }
-  componentDidMount() {
-     BooksAPI.getAll().then((books) => {
-       this.setState({ books:books })
-     })
+    searchBooks: [],
+    maxResults: 20
   }
 
- refreshPage() {
-        BooksAPI.getAll().then((books) => {
-       this.setState({ books:books })
-     })
- }
-  
- resetPage() {       
-       //this.setState({ books:{} })
+/** Removes the book from searchResults and 
+** adds books from shelf with matching id. 
+**/ 
+removeBook= (book) => {
+    this.setState((state) => ({
+      searchBooks: state.searchBooks.filter((c) => c.id !== book.id)
+    }))
+    this.addBook(book)
+  }
+
+addBook=(book) => {
+  this.state.searchBooks.push(book)
+  }
+
+
+updateSearchResults (searchResults) {
+
+  searchResults.map((searchItem) => {
      
- }
-
-  handleShelfChange(book,shelf) {
-    BooksAPI.update(book,shelf).then(this.refreshPage)
+             this.state.books.map((bookItem) => {
+               if(searchItem.id === bookItem.id){
+                  //array1.push(bookItem);
+                  //console.log(" match" + bookItem.shelf)
+                 this.removeBook(bookItem)
+                }
+               else {
+                 //console.log(searchItem.shelf)
+               }
+           })
+        })
 }
 
-  handleSearchBar = (showSearchPage)  => {
-    console.log("showSearchStatus is " + showSearchPage)
-      this.setState({ showSearchPage: showSearchPage })
-      if(showSearchPage === false) {
-        console.log("clearing out previous searches")
-        this.state.showSearchPage === false
-        this.setState({ showingBooks:[] })
-      }
+  searchQuery = debounce((query,maxResults) => {
+    console.log("searching for " + query + " for this many results " + maxResults)
+    if(query.trim().length>0) {
+        BooksAPI.search(query,maxResults).then((_searchResults) => {
+          console.log("hitting search api")
+          console.log(_searchResults.error)
+           if(_searchResults.error === 'empty query') {
+              //if there is no result
+              //alert('empty query')
+      			this.setState({ searchBooks:[] })
+   			}
+          else {
+           console.log("hitting search api" + _searchResults) 
+           //this.updateShelfToNone(_searchResults)
+           this.setState({ searchBooks:_searchResults })
+           this.updateSearchResults(_searchResults)
+          }
+           
+         })
+         .catch(this.setState({ searchBooks:[] }))
+    }else {
+      this.setState({ searchBooks:[] })
+    }
+   },500)          
+
+
+  apiGetBooks() {
+        BooksAPI.getAll().then((books) => {
+        this.setState({ books:books })
+     }) 
   }
 
-   updateQuery = debounce((text) => {
-     this.setState({ query: text.trim() }) 
-   },500)
+  clearSearchRequests() {
+     this.setState({ searchBooks:[] })
+  }
 
-  
-  searchQuery = debounce((query,maxResults) => {
-    console.log("searching for " + query)
-    //if(query.trim().length>0) {
-        BooksAPI.search(query,maxResults).then((books) => {
-           this.setState({ showingBooks:books })
-           console.log(this.state.showingBooks)
-         })
-         .catch(error => alert(error.message))
+  componentDidMount() {
+	this.apiGetBooks()
+  }
 
-  },500)
-   
+ /* call api to update shelf and then once the promise has been successfully resolved, update booklist
+ */
+  handleShelfChange(book,shelf) {
+    console.log('changing shelf')
+    BooksAPI.update(book,shelf). then ( () => {
+         this.apiGetBooks() 
+      }
+    )
+  }
+
+
   render() {  
+   
+    //console.log(this.state.searchBooks.error)
+    const { books, searchBooks } = this.state
 
-     const { query, displayShelf, showSearchPage,book,showingSearchBooks } = this.state
-
-     console.log("show result page - App.js " + this.state.showSearchPage)
-
+    //console.log(books)
+    
     return (
       <div>
         <Route exact path='/' render={() => (
           <ListBooks
             onShelfChange={(book,shelf) => {this.handleShelfChange(book,shelf)}}
-            onSearchQuery={(search,maxResults) => {this.searchQuery(search,maxResults)}}
-            books={this.state.books}
-			showingSearchBooks = {this.state.showingBooks}
-            handleSearchBar={ () => { this.handleSearchBar(showSearchPage) } }
+            books={books}
+			searchBooks={searchBooks}
+            handleRequestToClear={() => {this.clearSearchRequests()}} 
            />
+  
           )}/>
-        )}/>
-        <Route exact path='/search' render={({ history }) => (
-			<SearchBooks onSearchQuery={(search,maxResults) => {this.searchQuery(search,maxResults)}}
+        <Route path='/search' render={({ history }) => (
+			<SearchBooks onSearchQuery={(search,maxResults) => {
+                         this.searchQuery(search,maxResults)
+        					}					
+ 							}
                           books={ this.state.books }
-  						  showingSearchBooks = {this.state.showingBooks}
-                          onShelfChange={ (books,shelf) => { this.handleShelfChange(books,shelf) } }
-						  handleSearchBar={ (showSearchPage) => { this.handleSearchBar(showSearchPage) 
-                          history.push('/')
-                         } }
+						  searchBooks={ this.state.searchBooks }	
+						  onShelfChange={(book,shelf) => {
+                            							this.handleShelfChange(book,shelf)
+												} }
+							
            />
-
-
           )}/>
-        )}/>
-
       </div>
     )
   }

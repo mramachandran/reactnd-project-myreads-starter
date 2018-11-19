@@ -10,56 +10,44 @@ class ListBooks extends Component {
   static propTypes = {
     books: PropTypes.array.isRequired,
     onShelfChange: PropTypes.func.isRequired,
-    onSearchQuery: PropTypes.func.isRequired,
-    handleSearchBar: PropTypes.func.isRequired,
-    showingSearchBooks: PropTypes.array
+    //onSearchQuery: PropTypes.func.isRequired,
+    //showSearchBar: PropTypes.func.isRequired,
+    //showingSearchBooks: PropTypes.array,
+    //resetSearchQuery: PropTypes.func.isRequired
+    //showSearchPage: PropTypes.bool.isRequired
+    handleRequestToClear: PropTypes.func.isRequired
   }
 
   state = {
     query: '',
-    displayShelf : '',
-    showSearchPage: false,  
+    displayShelf : ''
   }
  
-  clearQuery = () => {
-    this.setState({ query: '' })
-  }
-//books={books} onSearchQuery={(search,maxResults) => {onSearchQuery(search,maxResults)}
-  //handleSearchBar = (showSearchPage)  => {
-      //this.setState({ showSearchPage: showSearchPage })
-  //}
+componentDidMount()
+{
+  console.log('finished mounting listbooks');
+  this.props.handleRequestToClear()
+}
+
    isRealValue(obj)
   {
     return obj && obj !== 'null' && obj !== 'undefined';
   }
 
   render() {    
-    const { books, onShelfChange, onSearchQuery,showingSearchBooks,handleSearchBar } = this.props
-    const { query, displayShelf,showSearchPage } = this.state
+    const {  onShelfChange,books,searchBooks,handleRequestToClear } = this.props
+    const { query,  displayShelf} = this.state
     const maxResults = 20
 
     const shelves = {
     currentlyReading: ['Currently Reading', 'currentlyReading'],
     wantToRead: ['Want to Read', 'wantToRead'],
     read: ['Read', 'read']
-    }
-    
-     console.log("search books in result - ListBook " + showingSearchBooks)
+    }    
 
     return (   
-      
       <div className="app">
-      {this.state.showSearchPage ?( 
-             <SearchBooks onSearchQuery={(search,maxResults) => {onSearchQuery(search,maxResults)}}
-                          books={ books }
-						  showingSearchBooks={ showingSearchBooks }	
-                          onShelfChange={ (books,shelf) => { onShelfChange(books,shelf) } }
-						  handleSearchBar={ (showSearchPage) => { handleSearchBar(showSearchPage) } }
-      /> 
-//calling SearchComponent to be displayed - do not have proptyes check as we just need to display the search page
-        ) :
-      (
-      <div className="list-books">
+         <div className="list-books">
             <div className="list-books-title">
               <h1>MyReads</h1>
             </div>
@@ -68,18 +56,15 @@ class ListBooks extends Component {
                     <BookShelf key={shelf}
                       shelf={shelves[shelf][1]}
                       title={shelves[shelf][0]}
-                      books={ books }
-					  showingSearchBooks = {showingSearchBooks}
+                      books={books}
+				      searchBooks={searchBooks}
                       onShelfChange={ (books,shelf) => { onShelfChange(books,shelf) } }
       				/>
     				)}
 				
      	    </div>
-            <div className="open-search">
-              <a onClick={() => this.setState({ showSearchPage: true })}>Add a book</a>
-            </div>
+            <Link to="/search" className="open-search">Add a book</Link>
       </div>
-        )}
       </div>
     )
   }
